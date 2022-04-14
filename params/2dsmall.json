@@ -1,6 +1,6 @@
 {
     "pp": {
-        "F": 128,
+        "F": 100,
         "gridL": 64,
         "cellL": 0.85,
         "depths": [
@@ -42,12 +42,12 @@
         "objN": 1
     },
     "optp": {
-        "fixα": true,
+        "fixα": false,
         "optimizer": "Adam",
-        "η": 1e-3,
+        "η": 1e-2,
         "init": "uniform",
         "optname": "default",
-        "iters": 100,
-        "hyperscale": 100
+        "iters": 500,
+        "hyperscale": 10
     }
 }
