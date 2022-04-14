@@ -2,10 +2,11 @@
 
 ## Prerequisites
 
-Clone [WavePropagation.jl](https://github.com/gaurav-arya/WavePropagation.jl) and [ImplicitAdjoints.jl](https://github.com/gaurav-arya/ImplicitAdjoints.jl) and run
+Clone [WavePropagation.jl](https://github.com/gaurav-arya/WavePropagation.jl), [ImplicitAdjoints.jl](https://github.com/gaurav-arya/ImplicitAdjoints.jl) and this repo and run
 ```
 dev {path to WavePropagation.jl}
 dev {path to ImplicitAdjoints.jl}
+dev {path to this repo}
 ```
 
 ## Directory structure
