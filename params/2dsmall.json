@@ -1,0 +1,53 @@
+{
+    "pp": {
+        "F": 128,
+        "gridL": 64,
+        "cellL": 0.85,
+        "depths": [
+                1000
+        ],
+        "λ": 549.02,
+        "freqs": [
+            1.168127659574468
+        ],
+        "ϵsub": [2.14372434],
+        "ϵs": [
+            [6.22979181]
+        ],
+        "order": 1279,
+        "lb": 0.11,	
+        "ub": 0.74,
+        "thickness": 600,
+        "material": "tiO2",
+        "models_dir": "surdata" 
+    },
+    "recp": {
+        "α": 1e3,
+        "β": 1e4,
+        "reg_type": "l1",
+        "iters": 20000,
+        "tol": 1e-12
+    },
+    "imgp": {
+        "objL": 20,
+        "imgL": 12,
+        "binL": 2,
+        "sbinL": 1,
+        "obinL": 1,
+        "sparsity": 0.05,
+        "object_type": "beads",
+        "object_data": [],
+        "fixed_sparsity": true,
+        "noise_level": 0.05,
+        "objN": 1
+    },
+    "optp": {
+        "fixα": true,
+        "optimizer": "Adam",
+        "η": 1e-3,
+        "init": "uniform",
+        "optname": "default",
+        "iters": 100,
+        "hyperscale": 100
+    }
+}
