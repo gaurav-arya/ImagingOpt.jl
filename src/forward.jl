@@ -1,4 +1,4 @@
-struct Gop <: LinearMap{Float64}
+struct Gop2 <: LinearMap{Float64}
     fftPSFs::AbstractArray # todo: fix
     objL::Int
     imgL::Int
@@ -9,16 +9,16 @@ struct Gop <: LinearMap{Float64}
 end   
 
 # TODO: as usual, type better
-function Gop(fftPSFs, objL, imgL, nD, nF, nC)
+function Gop2(fftPSFs, objL, imgL, nD, nF, nC)
     psfL = objL + imgL
     padded = Array{ComplexF64}(undef, psfL, psfL, nD, nF, nC)
-    Gop(fftPSFs, objL, imgL, nD, nF, nC, padded) 
+    Gop2(fftPSFs, objL, imgL, nD, nF, nC, padded) 
 end
 
-Base.size(G::Gop) = (G.nC * G.imgL^2, G.nF * G.nD * G.objL^2) 
-GopTranspose = LinearMaps.TransposeMap{<:Any, <:Gop} # TODO: make constant
+Base.size(G::Gop2) = (G.nC * G.imgL^2, G.nF * G.nD * G.objL^2) 
+Gop2Transpose = LinearMaps.TransposeMap{<:Any, <:Gop2} # TODO: make constant
     
-function Base.:(*)(G::Gop, uflat::AbstractVector)
+function Base.:(*)(G::Gop2, uflat::AbstractVector)
     u = reshape(uflat, (G.objL, G.objL, G.nD, G.nF))
     
     to_y(obj_plane, kernel) = real.(convolve(obj_plane, kernel))
@@ -34,7 +34,7 @@ end
 using ThreadsX
 #using LoopVectorization
 
-function mul!(yflat::AbstractVecOrMat, G::Gop, uflat::AbstractVector)
+function mul!(yflat::AbstractVecOrMat, G::Gop2, uflat::AbstractVector)
     u = reshape(uflat, (G.objL, G.objL, G.nD, G.nF))
     y = reshape(yflat, (G.imgL, G.imgL, G.nC))
     y .= 0
@@ -64,7 +64,7 @@ function mul!(yflat::AbstractVecOrMat, G::Gop, uflat::AbstractVector)
     yflat
 end
 
-function Base.:(*)(Gt::GopTranspose, yflat::AbstractVector)
+function Base.:(*)(Gt::Gop2Transpose, yflat::AbstractVector)
     G = Gt.lmap
     y = reshape(yflat, (G.imgL, G.imgL, G.nC))
 
@@ -79,7 +79,7 @@ function Base.:(*)(Gt::GopTranspose, yflat::AbstractVector)
     u[:]
 end
 
-function mul!(uflat::AbstractVecOrMat, Gt::GopTranspose, yflat::AbstractVector)
+function mul!(uflat::AbstractVecOrMat, Gt::Gop2Transpose, yflat::AbstractVector)
     G = Gt.lmap
     y = reshape(yflat, (G.imgL, G.imgL, G.nC))
     u = reshape(uflat, (G.objL, G.objL, G.nD, G.nF))

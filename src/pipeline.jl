@@ -55,7 +55,7 @@ function PSFs_to_G(PSFs, objL, imgL, sbinL, obinL)
     fftPSFs = [planned_fft(PSFsC[:, :, iD, iF, iC]) for iD in 1:nD, iF in 1:nF, iC in 1:nC]
     fftPSFs = arrarr_to_multi(fftPSFs)
 
-    G = Gop(fftPSFs, objL, imgL, nD, nF, nC)
+    G = Gop2(fftPSFs, objL, imgL, nD, nF, nC)
     sbinL != 1 && (G = Bin(imgL, sbinL, nC) * G)
     obinL != 1 && (G = G * Bin(objL, obinL, nD * nF)')
 
