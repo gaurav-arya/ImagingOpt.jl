@@ -115,7 +115,7 @@ function run_opt(pname, iters)
     logα = [log(α₀)]
     logβ = [log(β₀)]
     hyperscale = p.optp.hyperscale
-    st = Optimisers.state(opt, (geoms, logα/hyperscale, logβ/hyperscale))
+    st = Optimisers.setup(opt, (geoms, logα/hyperscale, logβ/hyperscale))
 
     flush(stdout)
 
