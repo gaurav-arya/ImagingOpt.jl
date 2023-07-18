@@ -8,6 +8,7 @@ dev {path to WavePropagation.jl}
 dev {path to ImplicitAdjoints.jl}
 dev {path to this repo}
 ```
+in Julia's package manager.
 
 ## Directory structure
 
