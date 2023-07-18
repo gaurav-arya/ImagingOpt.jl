@@ -1,5 +1,7 @@
-using ImagingOpt
+import Pkg; Pkg.activate(@__DIR__); cd(dirname(@__DIR__));
+
 using Plots
+using ImagingOpt
 
 optname = run_opt("2dsmall")
 
