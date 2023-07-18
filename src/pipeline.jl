@@ -17,7 +17,7 @@ function geoms_to_far(geoms, surrogates, incidents, n2f_kernels)
     #end
    
     #trans = mypmap((iF, iC)::Tuple -> to_trans(iF, iC), Iterators.product(1:nF, 1:nC)) # parallelism not needed for now
-    #trans = arrarr_to_multi(trans)
+    #trans = stack(trans)
 
     inctmp = reshape(incidents, gridL, gridL, nD, nF, 1)
     transtmp = reshape(trans, gridL, gridL, 1, nF, nC)
@@ -28,7 +28,7 @@ function geoms_to_far(geoms, surrogates, incidents, n2f_kernels)
     kernelstmp = [n2f_kernels[:, :, iF] for iD in 1:nD, iF in 1:nF, iC in 1:nC]
 
     far = mypmap(to_far, neartmp, kernelstmp) # TODO: switch to Dagger
-    far = arrarr_to_multi(far)
+    far = stack(far)
 
     (;far, near, trans)
 end
@@ -44,7 +44,7 @@ function far_to_PSFs(far, psfL, binL)
     PSFsbin = sum(farcropbinmag, dims=(1, 3))
     _PSFs1 = dropdims(PSFsbin, dims=(1,3))
     _PSFs2 = [_PSFs1[:, :, iD, iF, iC] ./ mean(_PSFs1[:, :, iD, iF, iC]) for iD in 1:nD, iF in 1:nF, iC in 1:nC] # Normalize PSF values, allowing for different calibration values for different channels
-    PSFs = arrarr_to_multi(_PSFs2)
+    PSFs = stack(_PSFs2)
     PSFs
 end
 
@@ -53,7 +53,7 @@ function PSFs_to_G(PSFs, objL, imgL, sbinL, obinL)
 
     PSFsC = complex.(PSFs) # needed because adjoint of fft does not project correctly
     fftPSFs = [planned_fft(PSFsC[:, :, iD, iF, iC]) for iD in 1:nD, iF in 1:nF, iC in 1:nC]
-    fftPSFs = arrarr_to_multi(fftPSFs)
+    fftPSFs = stack(fftPSFs)
 
     G = Gop2(fftPSFs, objL, imgL, nD, nF, nC)
     sbinL != 1 && (G = Bin(imgL, sbinL, nC) * G)
@@ -80,7 +80,7 @@ function G_to_est(G, α, β, objects, noises, iters, tol, reg)
     solver_infos = [r[2] for r in reconstructions]
     objects_est = [r[1] for r in reconstructions]
     objects_est = [reshape(uflat, (objL, objL, nD, nF)) for uflat in objects_est]
-    objects_est = arrarr_to_multi(objects_est)
+    objects_est = stack(objects_est)
 
     (;objects_est, solver_infos, images)
 end
