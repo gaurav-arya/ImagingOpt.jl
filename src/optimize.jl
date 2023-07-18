@@ -143,7 +143,7 @@ function run_opt(pname, iters)
         @printf "Iteration: %d\nα: %.4f\nβ: %.4f\nRMSE: %f\nMax iterations: %d\nWorst tol: %f\n\n" iter exp(logα[1]) exp(logβ[1]) sqrt(res.MSE) max_iters worst_tol 
         flush(stdout)
 
-        st, (geoms, logα, logβ) = Optimisers.update(opt, st, (geoms, logα/hyperscale, logβ/hyperscale), Δf)
+        st, (geoms, logα, logβ) = Optimisers.update(st, (geoms, logα/hyperscale, logβ/hyperscale), Δf)
         logα *= hyperscale
         logβ *= hyperscale
 		#logβ[1] = logα[1] - 2.5  
