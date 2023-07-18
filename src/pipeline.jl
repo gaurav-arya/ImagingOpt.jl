@@ -42,9 +42,9 @@ function far_to_PSFs(far, psfL, binL)
     farcropbin = reshape(farcrop, (binL, psfL, binL, psfL, nD, nF, nC))
     farcropbinmag = (abs.(farcropbin)).^2
     PSFsbin = sum(farcropbinmag, dims=(1, 3))
-    PSFs = dropdims(PSFsbin, dims=(1,3))
-    PSFs = [PSFs[:, :, iD, iF, iC] ./ mean(PSFs[:, :, iD, iF, iC]) for iD in 1:nD, iF in 1:nF, iC in 1:nC] # Normalize PSF values, allowing for different calibration values for different channels
-    PSFs = arrarr_to_multi(PSFs)
+    _PSFs1 = dropdims(PSFsbin, dims=(1,3))
+    _PSFs2 = [_PSFs1[:, :, iD, iF, iC] ./ mean(_PSFs1[:, :, iD, iF, iC]) for iD in 1:nD, iF in 1:nF, iC in 1:nC] # Normalize PSF values, allowing for different calibration values for different channels
+    PSFs = arrarr_to_multi(_PSFs2)
     PSFs
 end
 
@@ -55,7 +55,7 @@ function PSFs_to_G(PSFs, objL, imgL, sbinL, obinL)
     fftPSFs = [planned_fft(PSFsC[:, :, iD, iF, iC]) for iD in 1:nD, iF in 1:nF, iC in 1:nC]
     fftPSFs = arrarr_to_multi(fftPSFs)
 
-    G = Gop(fftPSFs, objL, imgL, nD, nF, nC)
+    G = Gop2(fftPSFs, objL, imgL, nD, nF, nC)
     sbinL != 1 && (G = Bin(imgL, sbinL, nC) * G)
     obinL != 1 && (G = G * Bin(objL, obinL, nD * nF)')
 
