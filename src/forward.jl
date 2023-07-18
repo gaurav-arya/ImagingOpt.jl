@@ -1,4 +1,4 @@
-struct Gop <: LinearMap{Float64}
+struct Gop2 <: LinearMap{Float64}
     fftPSFs::AbstractArray # todo: fix
     objL::Int
     imgL::Int
@@ -9,16 +9,16 @@ struct Gop <: LinearMap{Float64}
 end   
 
 # TODO: as usual, type better
-function Gop(fftPSFs, objL, imgL, nD, nF, nC)
+function Gop2(fftPSFs, objL, imgL, nD, nF, nC)
     psfL = objL + imgL
     padded = Array{ComplexF64}(undef, psfL, psfL, nD, nF, nC)
-    Gop(fftPSFs, objL, imgL, nD, nF, nC, padded) 
+    Gop2(fftPSFs, objL, imgL, nD, nF, nC, padded) 
 end
 
-Base.size(G::Gop) = (G.nC * G.imgL^2, G.nF * G.nD * G.objL^2) 
-GopTranspose = LinearMaps.TransposeMap{<:Any, <:Gop} # TODO: make constant
+Base.size(G::Gop2) = (G.nC * G.imgL^2, G.nF * G.nD * G.objL^2) 
+Gop2Transpose = LinearMaps.TransposeMap{<:Any, <:Gop2} # TODO: make constant
     
-function Base.:(*)(G::Gop, uflat::AbstractVector)
+function Base.:(*)(G::Gop2, uflat::AbstractVector)
     u = reshape(uflat, (G.objL, G.objL, G.nD, G.nF))
     
     to_y(obj_plane, kernel) = real.(convolve(obj_plane, kernel))
@@ -34,7 +34,7 @@ end
 using ThreadsX
 #using LoopVectorization
 
-function mul!(yflat::AbstractVecOrMat, G::Gop, uflat::AbstractVector)
+function LinearMaps._unsafe_mul!(yflat::AbstractVecOrMat, G::Gop2, uflat::AbstractVector)
     u = reshape(uflat, (G.objL, G.objL, G.nD, G.nF))
     y = reshape(yflat, (G.imgL, G.imgL, G.nC))
     y .= 0
@@ -64,7 +64,7 @@ function mul!(yflat::AbstractVecOrMat, G::Gop, uflat::AbstractVector)
     yflat
 end
 
-function Base.:(*)(Gt::GopTranspose, yflat::AbstractVector)
+function Base.:(*)(Gt::Gop2Transpose, yflat::AbstractVector)
     G = Gt.lmap
     y = reshape(yflat, (G.imgL, G.imgL, G.nC))
 
@@ -79,7 +79,7 @@ function Base.:(*)(Gt::GopTranspose, yflat::AbstractVector)
     u[:]
 end
 
-function mul!(uflat::AbstractVecOrMat, Gt::GopTranspose, yflat::AbstractVector)
+function LinearMaps._unsafe_mul!(uflat::AbstractVecOrMat, Gt::Gop2Transpose, yflat::AbstractVector)
     G = Gt.lmap
     y = reshape(yflat, (G.imgL, G.imgL, G.nC))
     u = reshape(uflat, (G.objL, G.objL, G.nD, G.nF))
@@ -120,14 +120,14 @@ function Base.:(*)(Bt::BinTranspose, yflat::AbstractVector)
     u[:] # TODO: avoid unnecessary allocation
 end
 
-function mul!(yflat::AbstractVecOrMat, B::Bin, uflat::AbstractVector)
+function LinearMaps._unsafe_mul!(yflat::AbstractVecOrMat, B::Bin, uflat::AbstractVector)
     u = reshape(uflat, (B.binL, B.L, B.binL, B.L, B.nCh))
     y = reshape(yflat, (1, B.L, 1, B.L, B.nCh))
     sum!(y, u)
     yflat
 end
 
-function mul!(uflat::AbstractVecOrMat, Bt::BinTranspose, yflat::AbstractVector)
+function LinearMaps._unsafe_mul!(uflat::AbstractVecOrMat, Bt::BinTranspose, yflat::AbstractVector)
     B = Bt.lmap
     y = reshape(yflat, (1, B.L, 1, B.L, B.nCh))
     u = reshape(uflat, (B.binL, B.L, B.binL, B.L, B.nCh))
@@ -146,13 +146,13 @@ Base.size(F::FFT) = (F.N, F.N)
 FFTAdjoint = LinearMaps.AdjointMap{<:Any, <:FFT}
 LinearAlgebra.ishermitian(::FFT) = false # not true!
 
-function mul!(yflat::AbstractVector, F::FFT, uflat::AbstractVector)
+function LinearMaps._unsafe_mul!(yflat::AbstractVector, F::FFT, uflat::AbstractVector)
     yflat .= uflat
     fft!(yflat)
     yflat
 end
 
-function mul!(uflat::AbstractVector, F::FFTAdjoint, yflat::AbstractVector)
+function LinearMaps._unsafe_mul!(uflat::AbstractVector, F::FFTAdjoint, yflat::AbstractVector)
     uflat .= yflat
     #conj.(fft!(conj.(uflat)))
     #fft!(conj.(uflat))
@@ -171,13 +171,13 @@ end
 Base.size(R::CtoROp) = (2 * R.N, R.N)
 CtoROpAdjoint = LinearMaps.AdjointMap{<:Any, <:CtoROp}
 
-function mul!(yflat::AbstractVector, R::CtoROp, uflat::AbstractVector)
+function LinearMaps._unsafe_mul!(yflat::AbstractVector, R::CtoROp, uflat::AbstractVector)
     yflat[1:2:end] .= real.(uflat)
     yflat[2:2:end] .= imag.(uflat)
     yflat
 end
 
-function mul!(uflat::AbstractVector, Rt::CtoROpAdjoint, yflat::AbstractVector)
+function LinearMaps._unsafe_mul!(uflat::AbstractVector, Rt::CtoROpAdjoint, yflat::AbstractVector)
     uflat .= yflat[1:2:end]
     uflat .+= yflat[2:2:end] .* im
     #println(uflat)
@@ -193,11 +193,11 @@ end
 Base.size(R::RtoCOp) = (R.N, R.N)
 RtoCOpAdjoint = LinearMaps.AdjointMap{<:Any, <:RtoCOp}
 
-function mul!(uflat::AbstractVector, R::RtoCOp, yflat::AbstractVector)
+function LinearMaps._unsafe_mul!(uflat::AbstractVector, R::RtoCOp, yflat::AbstractVector)
     uflat .= yflat
 end
 
-function mul!(yflat::AbstractVector, Rt::RtoCOpAdjoint, uflat::AbstractVector)
+function LinearMaps._unsafe_mul!(yflat::AbstractVector, Rt::RtoCOpAdjoint, uflat::AbstractVector)
     yflat .= real.(uflat)
 end
 
@@ -211,12 +211,12 @@ end
 Base.size(R::Restrict) = (length(R.S), R.N)
 RestrictTranspose = LinearMaps.TransposeMap{<:Any, <:Restrict}
 
-function mul!(yflat::AbstractVector, R::Restrict, uflat::AbstractVector)
+function LinearMaps._unsafe_mul!(yflat::AbstractVector, R::Restrict, uflat::AbstractVector)
     @views yflat .= real.(uflat[R.S]) # need to do this to handle tiny imag :(
     yflat
 end
 
-function mul!(uflat::AbstractVector, Rt::RestrictTranspose, yflat::AbstractVector)
+function LinearMaps._unsafe_mul!(uflat::AbstractVector, Rt::RestrictTranspose, yflat::AbstractVector)
     R = Rt.lmap
     uflat .= 0
     uflat[R.S] .= yflat
