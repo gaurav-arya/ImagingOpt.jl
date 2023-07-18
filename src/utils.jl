@@ -46,12 +46,3 @@ save_backs = Dict()
     (Δf, Δf_and_args[2:end]..., nothing, nothing)
   end
 end
-
-# Convert array of arrays to multidimensional array
-# using Zygote-friendly operations
-function arrarr_to_multi(arrarr)
-    outsz = size(arrarr)
-    insz = size(arrarr[1])
-    arrarr = [reshape(inarr, (prod(insz),)) for inarr in arrarr]
-    reshape(vcat(arrarr...), insz..., outsz...)
-end

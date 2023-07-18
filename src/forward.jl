@@ -26,7 +26,7 @@ function Base.:(*)(G::Gop2, uflat::AbstractVector)
     fftPSFstmp = [G.fftPSFs[:, :, iD, iF, iC] for iD in 1:G.nD, iF in 1:G.nF, iC in 1:G.nC] # TODO: store on workers
     y = map(to_y, utmp, fftPSFstmp) 
     y = sum(y, dims=(1,2))
-    y = arrarr_to_multi(y)
+    y = stack(y)
 
     y[:]
 end
@@ -74,7 +74,7 @@ function Base.:(*)(Gt::Gop2Transpose, yflat::AbstractVector)
 
     u = map(to_u, ytmp, fftPSFstmp) # TODO: use threads/Dagger
     u = sum(u, dims=3)
-    u = arrarr_to_multi(u)
+    u = stack(u)
 
     u[:]
 end
