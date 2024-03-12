@@ -47,7 +47,7 @@ struct OptimizeParams
     hyperscale::Float64 # to change α and β more quickly
 end
 
-function prepare_physics(pp::PhysicsParams)
+function prepare_physics(pp::PhysicsParams; base_dir = "")
     nD = length(pp.depths)
     nF = length(pp.freqs)
     nC = length(pp.ϵs)
@@ -59,7 +59,7 @@ function prepare_physics(pp::PhysicsParams)
     n2f_kernels = [n2f_kernels[iF][i, j] for i in 1:2*pp.gridL, j in 1:2*pp.gridL, iF in 1:nF]
 
     filename(iF, iC) = @sprintf "%s/%s_wavcen%.3f_freq%.3f_conf%d.dat" pp.models_dir pp.material pp.λ pp.freqs[iF] iC 
-    surrogates = [get_model(pp.order, pp.lb, pp.ub, filename(iF, iC)) for iF in 1:nF, iC in 1:nC]
+    surrogates = [get_model(pp.order, pp.lb, pp.ub, joinpath(base_dir, filename(iF, iC))) for iF in 1:nF, iC in 1:nC]
 
     incidents, n2f_kernels, surrogates
 end
