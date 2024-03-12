@@ -14,25 +14,25 @@ StructTypes.StructType(::Type{OptimizeParams}) = StructTypes.Struct()
 StructTypes.StructType(::Type{JobParams}) = StructTypes.Struct()
 
 read_params(fn) = JSON3.read(read(fn, String), JobParams)
-get_params_fn(pname) = "$PARAMS_DIR/$pname.json"
-get_params(pname) = read_params(get_params_fn(pname)) # TODO: clean this all up
-get_paramsopt(name) = read_params("$DIR/$name.json")
+get_params_fn(pname; params_dir = PARAMS_DIR) = "$params_dir/$pname.json"
+get_params(pname; params_dir = PARAMS_DIR) = read_params(get_params_fn(pname; params_dir)) # TODO: clean this all up
+get_paramsopt(name; dir = DIR) = read_params("$dir/$name.json")
 
 const DIR = "optdata"
 const PARAMS_DIR = "params"
 
 # Takes in a parameter file and ruuns the optimization
-run_opt(pname) = run_opt(pname, get_params(pname).optp.iters)
-run_psfopt(pname) = run_psfopt(pname, get_params(pname).optp.iters)
+run_opt(pname; dir = DIR, params_dir = PARAMS_DIR) = run_opt(pname, get_params(pname; dir, params_dir).optp.iters)
+run_psfopt(pname; dir = DIR, params_dir = PARAMS_DIR) = run_psfopt(pname, get_params(pname; dir, params_dir).optp.iters)
 
 # TODO: support start iteration > 0 with continue opt function
-function run_psfopt(pname, iters)
-    p = get_params(pname)
+function run_psfopt(pname, iters; dir = DIR, params_dir = PARAMS_DIR)
+    p = get_params(pname; params_dir)
 
     optname = "$pname-psf-$(now())"
     println("Starting PSF optimization '$optname'")
     println("Directory: $(pwd())")
-    cp(get_params_fn(pname), "$DIR/$optname.json")
+    cp(get_params_fn(pname; params_dir), "$dir/$optname.json")
 
     reg = prepare_reg(p.recp.reg_type, p.imgp, p.pp)
     α₀ = p.recp.α
@@ -65,13 +65,13 @@ function run_psfopt(pname, iters)
         σMSE = std(res.SEs)
 
 	if iter < 20 || (iter % 10 == 0)
-        	jldsave("$DIR/$optname-raw-$(iter).jld2"; res, 
+        	jldsave("$dir/$optname-raw-$(iter).jld2"; res, 
                                                      vars=(;PSFs, logα, logβ), 
                                                      grad=(;∂PSFs, ∂logα, ∂logβ), 
                                                      examples=(;objects, noises),
 					             state=st)
 	end
-        jldsave("$DIR/$optname-small-$(iter).jld2"; res=(;MSE=res.MSE, σMSE, worst_tol), 
+        jldsave("$dir/$optname-small-$(iter).jld2"; res=(;MSE=res.MSE, σMSE, worst_tol), 
                                                         vars=(;logα, logβ, PSFs_min=minimum(PSFs), PSFs_max=maximum(PSFs)),
                                                         grad=(;∂logα, ∂logβ, ∂PSFs_mag=sqrt(sum(∂PSFs.^2))))
 
@@ -86,12 +86,12 @@ function run_psfopt(pname, iters)
     optname
 end
 
-function run_opt(pname, iters)
-    p = get_params(pname)
+function run_opt(pname, iters; dir = DIR, params_dir = PARAMS_DIR)
+    p = get_params(pname; params_dir)
 
     optname = "$pname-$(now())"
     println("Starting optimization '$optname'")
-    cp(get_params_fn(pname), "$DIR/$optname.json")
+    cp(get_params_fn(pname; params_dir), "$dir/$optname.json")
 
     incidents, n2f_kernels, surrogates = prepare_physics(p.pp)
     geoms₀ = prepare_geoms(p.pp, p.optp.init)
@@ -130,13 +130,13 @@ function run_opt(pname, iters)
         σMSE = std(res.SEs)
 
 	if iter < 20 || (iter % 10 == 0)
-        	jldsave("$DIR/$optname-raw-$(iter).jld2"; res, 
+        	jldsave("$dir/$optname-raw-$(iter).jld2"; res, 
                                                      vars=(;geoms, logα, logβ), 
                                                      grad=(;∂geoms, ∂logα, ∂logβ), 
                                                      examples=(;objects, noises),
                                                      state=st)
 	end
-        jldsave("$DIR/$optname-small-$(iter).jld2"; res=(;MSE=res.MSE, σMSE, worst_tol, far_maxabs=maximum(abs.(res.far)), far_meanabs=mean(abs.(res.far))), 
+        jldsave("$dir/$optname-small-$(iter).jld2"; res=(;MSE=res.MSE, σMSE, worst_tol, far_maxabs=maximum(abs.(res.far)), far_meanabs=mean(abs.(res.far))), 
                                                         vars=(;logα, logβ, geoms_min=minimum(geoms), geoms_max=maximum(geoms)),
                                                         grad=(;∂logα, ∂logβ, ∂geoms_mag=sqrt(sum(∂geoms.^2))))
 
@@ -152,16 +152,16 @@ function run_opt(pname, iters)
     optname
 end
 
-sorted_raws(name) = sort(glob("$DIR/$name-raw-*.jld2"), lt=natural)
-sorted_smalls(name) = sort(glob("$DIR/$name-small-*.jld2"), lt=natural)
-get_raw(name) = load(sorted_raws(name)[end])
-get_raw(name, iter) = load("$DIR/$name-raw-$iter.jld2")
-get_smalls(name) = map(load, sorted_smalls(name))
-get_smalls(name, iter) = map(load, sorted_smalls(name)[1:iter])
+sorted_raws(name; dir = DIR) = sort(glob("$name-raw-*.jld2", dir), lt=natural)
+sorted_smalls(name; dir = DIR) = sort(glob("$name-small-*.jld2", dir), lt=natural)
+get_raw(name; dir = DIR) = load(sorted_raws(name; dir)[end])
+get_raw(name, iter; dir = DIR) = load("$dir/$name-raw-$iter.jld2")
+get_smalls(name; dir = DIR) = map(load, sorted_smalls(name; dir))
+get_smalls(name, iter; dir = DIR) = map(load, sorted_smalls(name; dir)[1:iter])
 
 # TODO: clean up parameter override
-function test_init(pname, α, β, reg_type, init, reciters, objN, sparsity)
-    p = get_params(pname)
+function test_init(pname, α, β, reg_type, init, reciters, objN, sparsity; dir = DIR, params_dir = PARAMS_dir)
+    p = get_params(pname; params_dir)
     p = @set p.imgp.objN = objN
     p = @set p.imgp.sparsity = sparsity
     objects, noises = prepare_objects(p.imgp, p.pp)
@@ -175,8 +175,8 @@ function test_init(pname, α, β, reg_type, init, reciters, objN, sparsity)
         reciters, p.recp.tol, reg), (;objects, noises), (;incidents, n2f_kernels, surrogates)
 end
 
-function test_grad_init(pname, α, β, reg_type, init, reciters, objN)
-    p = get_params(pname)
+function test_grad_init(pname, α, β, reg_type, init, reciters, objN; dir = DIR, params_dir = PARAMS-dir)
+    p = get_params(pname; dir)
     p = @set p.imgp.objN = objN
     Random.seed!(3)
     objects, noises = prepare_objects(p.imgp, p.pp)
@@ -215,8 +215,8 @@ function test_grad_init(pname, α, β, reg_type, init, reciters, objN)
     res, Δf, (;objects, noises)
 end
 
-function getG_init(pname, init)
-    p = get_params(pname)
+function getG_init(pname, init; params_dir = PARAMS_DIR)
+    p = get_params(pname; params_dir)
     incidents, n2f_kernels, surrogates = prepare_physics(p.pp)
     geoms = prepare_geoms(p.pp, init)
     psfL = p.imgp.imgL + p.imgp.objL
@@ -228,8 +228,8 @@ function getG_init(pname, init)
     (;G, fftPSFs, PSFs, far, near, trans, incidents, n2f_kernels, surrogates)
 end
 
-function test_psf(pname, size_to_PSFs, α, β, reg_type, reciters, objN, sparsity)
-    p = get_params(pname)
+function test_psf(pname, size_to_PSFs, α, β, reg_type, reciters, objN, sparsity; params_dir = PARAMS_dir)
+    p = get_params(pname; params_dir)
     p = @set p.imgp.objN = objN
     p = @set p.imgp.sparsity = sparsity
     objects, noises = prepare_objects(p.imgp, p.pp)
@@ -243,16 +243,16 @@ function test_psf(pname, size_to_PSFs, α, β, reg_type, reciters, objN, sparsit
     (;MSE, SEs, objects_est, solver_infos, images, G, fftPSFs, PSFs), (;objects, noises)
 end
 
-function test_matrix(pname, size_to_X, α, β, reg_type, reciters, objN, sparsity)
-    p = get_params(pname)
+function test_matrix(pname, size_to_X, α, β, reg_type, reciters, objN, sparsity; params_dir = PARAMS_DIR)
+    p = get_params(pname; params_Dir)
     p = @set p.imgp.objN = objN
     p = @set p.imgp.sparsity = sparsity # TODO: this isn't sparsity
     objects, _ = prepare_objects(p.imgp, p.pp)
 	test_matrix(pname, size_to_X, α, β, reg_type, reciters, objN, sparsity, objects)
 end
 
-function test_matrix(pname, size_to_X, α, β, reg_type, reciters, objN, sparsity, objects)
-    p = get_params(pname)
+function test_matrix(pname, size_to_X, α, β, reg_type, reciters, objN, sparsity, objects; params_dir = PARAMS_DIR)
+    p = get_params(pname; params_dir)
     p = @set p.imgp.objN = objN
     p = @set p.imgp.sparsity = sparsity # TODO: this isn't sparsity
     _, noises = prepare_objects(p.imgp, p.pp)
