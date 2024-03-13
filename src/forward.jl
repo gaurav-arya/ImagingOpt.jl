@@ -44,12 +44,12 @@ function LinearMaps._unsafe_mul!(yflat::AbstractVecOrMat, G::Gop2, uflat::Abstra
     # (wait this is already in-place, awesome)
 
 	outs = Array{AbstractArray}(undef, (G.nD, G.nF, G.nC))
-	Threads.@threads for (iD, iF, iC) in collect(Iterators.product(1:G.nD, 1:G.nF, 1:G.nC))
+	for (iD, iF, iC) in collect(Iterators.product(1:G.nD, 1:G.nF, 1:G.nC))
 		@views out = real.(convolve!(u[:, :, iD, iF], G.fftPSFs[:, :, iD, iF, iC], G.padded[:, :, iD, iF, iC]))
 		outs[iD, iF, iC] = out
 	end
 
-	Threads.@threads for iC in 1:G.nC
+    for iC in 1:G.nC
 		y[:, :, iC] = ThreadsX.sum(outs[iD, iF, iC] for iD in 1:G.nD, iF in 1:G.nF)
 	end
 
@@ -85,7 +85,7 @@ function LinearMaps._unsafe_mul!(uflat::AbstractVecOrMat, Gt::Gop2Transpose, yfl
     u = reshape(uflat, (G.objL, G.objL, G.nD, G.nF))
     u .= 0
 
-    Threads.@threads for (iD, iF) in collect(Iterators.product(1:G.nD, 1:G.nF))
+    for (iD, iF) in collect(Iterators.product(1:G.nD, 1:G.nF))
         for iC in 1:G.nC
             @views u[:, :, iD, iF] .+= real.(convolveT!(y[:, :, iC], G.fftPSFs[:, :, iD, iF, iC], G.padded[:, :, iD, iF, iC]))
         end
