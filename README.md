@@ -42,3 +42,18 @@ heatmap(PSF, aspect_ratio=:equal, size=(400,400), dpi=300)
 
 ![MSEs](examples/mses.png) 
 ![PSF](examples/psf.png) 
+
+## Citation
+
+```
+@misc{https://doi.org/10.48550/arxiv.2201.12348,
+  doi = {10.48550/ARXIV.2201.12348},
+  url = {https://arxiv.org/abs/2201.12348},
+  author = {Arya, Gaurav and Li, William F. and Roques-Carmes, Charles and Solja\v{c}i\'{c}, Marin and Johnson, Steven G. and Lin, Zin},
+  keywords = {Image and Video Processing (eess.IV), Optimization and Control (math.OC), Optics (physics.optics), FOS: Electrical engineering, electronic engineering, information engineering, FOS: Electrical engineering, electronic engineering, information engineering, FOS: Mathematics, FOS: Mathematics, FOS: Physical sciences, FOS: Physical sciences},
+  title = {End-to-End Optimization of Metasurfaces for Imaging with Compressed Sensing},
+  publisher = {arXiv},
+  year = {2022},
+  copyright = {Creative Commons Attribution 4.0 International}
+}
+```
